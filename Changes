@@ -1,5 +1,23 @@
 Revision history for Perl extension Finance::Streamer.
 
+1.05 Wed May 23 04:33:41 PDT 2001
+
+	- bug fixes and ideas thanks to Steve Haehnichen
+
+		- Changed user agent id default to an id specific to this 
+		  library instead of an id of the Streamer applet.
+
+		- Changed 'select' to 'fields' due to potential conflicts
+		  with reserved word 'select'.
+
+	- Changed name of sub for receive() from 'sub' to 'sub_recv'
+	  to avoid potential reserved word conflicts.
+
+	- Removed option to filter or not in recieve().  Was not worth the
+	  confusion it caused.
+
+	- Updated documentation to reflect changes.
+
 1.04 Tue May 22 21:06:24 PDT 2001
 
 	- bug fixes thanks to Steve Haehnichen

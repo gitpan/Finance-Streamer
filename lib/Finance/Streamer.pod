@@ -1,11 +1,11 @@
 =head1 NAME
 
-Finance::Streamer - Interface to Datek Streamer
+Finance::Streamer - Interface to Datek Streamer.
 
 =head1 VERSION
 
-This document refers to version 1.04 of Finance::Streamer,
-released May 22, 2001.
+This document refers to version 1.05 of Finance::Streamer,
+released May 23, 2001.
 
 =head1 SYNOPSIS
 
@@ -13,13 +13,13 @@ released May 22, 2001.
 
  my $user = 'USER1234';
  my $pass = 'SF983JFDLKJSDFJL8342398KLSJF8329483LF';
- my $symbols = 'JDSU+QCOM+AMAT+IBM';
- my $select = '0+1+2+3+4+8+9+21';
+ my $symbols = 'JDSU+QCOM+AMAT+IBM+^COMPX';
+ my $fields = '0+1+2+3+4+8+9+21';
 
  my $streamer = Finance::Streamer->new( user => $user,
 					pass => $pass,
 					symbols => $symbols,
-					'select' => $select,
+					fields => $fields,
 					);
 
  my $sub = sub
@@ -35,7 +35,7 @@ released May 22, 2001.
 	}
  };
 
- $streamer->{'sub'} = $sub;
+ $streamer->{sub_recv} = $sub;
 
  $streamer->receive;
 
@@ -73,18 +73,19 @@ you could do it like so.
 
 =item $sock = $streamer->connect;
 
- user pass symbols select [timeout]
+ user pass symbols fields [agent] [timeout]
 
 	Returns socket object on success, undef otherwise.
 
 The I<connect> sub is used to initiate a connection with the data server.
 
-The values I<user>, I<pass>, I<symbols>, I<select> and an optional I<timeout>,
-must be defined in the I<streamer> object.
+The values I<user>, I<pass>, I<symbols>, I<fields>, optional I<agent>,
+and an optional I<timeout>, must be defined in the I<streamer> object
+before using this subroutine.
 
 The I<user> and I<pass> value is the user name and password of the account
 to be used for receiving data.  See the section 
-"How to obtain user name and password" below, for more info.  
+"how to obtain user name and password" below, for more info.  
 
 B<IMPORTANT> - If the I<user> or I<pass> is wrong, there is no 
 indication other than no data arriving after connection.
@@ -94,16 +95,21 @@ a '+' character.
 
  $symbols = "JDSU+QCOM+AMAT+IBM";
 
-The I<select> value can be any combination of the integers 0 to 21 in
+The I<fields> value can be any combination of the integers 0 to 21 in
 sequential order joined by the '+' character.  See the section 
-"select numbers" below, for more info.
+"field numbers" below, for more info.
 
- $select = "0+1+2+3+21";
+ $fields = "0+1+2+3+21";
+
+The I<agent> field determines the id of this library when it connects to
+a Streamer server.  By default the id is the name of this library.  The
+string should be one line with B<no> carriage return ('\n').
+
+ $agent = "My Server 1.01";
 
 The I<timeout> specifies the maximum number of seconds to wait for the
 connection to succeed.  The default value of B<60 seconds> is used
 if no value is specified.
-
 
 =item %data = Finance::Streamer::filter($raw_data);
 
@@ -115,7 +121,7 @@ The I<filter> subroutine changes raw quote data into an object
 (such as a hash) so that the data is easier to use.
 
 B<IMPORTANT> - The raw quote data must have been received using 
-the I<select> value 0 or this subroutine wont work.
+the I<fields> value 0 or this subroutine wont work.
 
 This subroutine does not use the I<streamer> object, so the name must
 be fully specified.  The only argument that is required is a variable 
@@ -129,30 +135,36 @@ is the I<Data::Dumper> module.
 
 Many checks/tests are made while the data is being filtered.  If something 
 is wrong with the data, an error message will be printed to STDERR 
-and I<undef> will be returned if the error was fatal.
+and I<undef> will be returned if the error was substantial enough that
+the quote data is wrong.
 
 =item $streamer->receive;
 
- sub user pass symbols select [timeout] [filter]
+ sub_recv user pass symbols fields [timeout]
 
 	Returns socket object on success, undef otherwise.
 
 The I<receive> subroutine deals with all the issues of connecting to the
-server, receiving data, etc, and executes the subroutine specified by I<sub>, 
-passing a single argument which contains the quote data every time a 
-quote is received.
+server, receiving data, etc, and executes the subroutine specified by 
+I<sub_recv>, passing a single argument which contains the quote data 
+every time a quote is received.  
 
-The single argument that is passed to B<sub> is determined by
-the value of I<filter> stored in the I<streamer> object.  
-If I<filter> is defined and has a value of -1 raw quote data is passed 
-to the sub, otherwise filtered quote data is passed to the sub.
+The values I<sub_recv>, I<user>, I<pass>, I<symbols>, I<fields>,
+and optional I<timeout>, must be defined in the I<streamer> object
+before using this subroutine.
 
-The values I<user>, I<pass>, I<symbols>, and I<select> are used only for the 
-I<connect> subroutine.  See the section on "connect" for more information.
+The I<sub_recv> value is a reference to a subroutine to be executed
+when new quote data arrives.  One argument, an object of filtered
+data as returned by I<filter>, will be passed to this subroutine.
 
-The I<timeout> specifies the maximum number of seconds to wait for
-new data to be received.  The default value of B<60 seconds> is used
-if no value is specified.
+The values I<user>, I<pass>, I<symbols>, I<fields> and I<timeout> are used 
+for the I<connect> subroutine.  See the section on I<connect> for more 
+information.
+
+The I<timeout> value, while it is used for I<connect>, is also used in 
+this subroutine to specify the maximum number of seconds to wait for 
+new data to arrive before reconnecting.  The default value of B<60 seconds> 
+is used if no value is specified.
 
 Error messages may be displayed.  Messages about errors receiving data 
 will indicate why and may result in a reconnection.  Messages about
@@ -167,7 +179,7 @@ to STDERR.
 This section contains information that must be understood in order to use this
 library.
 
-=head2 How to obtain user name and password
+=head2 how to obtain user name and password
 
 When you first start the Streamer application provided by Datek a window
 will pop up giving you a choice of what you want to launch 
@@ -177,9 +189,9 @@ is displayed in all capitals (e.g. "USER12345") and below it is
 a long string of upper case letters and numbers.  The long string is your
 password.
 
-=head2 select numbers
+=head2 field numbers
 
-The I<select numbers> are used to choose what data you want to receive for
+The I<field numbers> are used to choose what data you want to receive for
 each symbol.
 
  number		name		description

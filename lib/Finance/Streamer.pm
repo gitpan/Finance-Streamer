@@ -4,10 +4,13 @@ require 5.005_62;
 use strict;
 use warnings;
 
-our $VERSION = '1.04';
+our $VERSION = '1.05';
 
 use IO::Socket::INET 1.25;
 use IO::Select 1.14;
+
+# Default id used for connect() if nothing else is specified.
+my $USER_AGENT = "Finance Streamer $VERSION";
 
 # status codes
 my $QUOTE_RECV = 83;
@@ -45,8 +48,10 @@ sub connect
 
 	my ($user, $pass) = ($self->{user}, $self->{pass});
 	my $symbols = $self->{symbols};
-	my $select = $self->{'select'};
+	my $fields = $self->{fields};
 	my $timeout = $self->{timeout} || $TIMEOUT;
+
+	my $agent = $self->{agent} || $USER_AGENT;
 
 	my $sock = IO::Socket::INET->new(PeerAddr => $SERVER,
 					 PeerPort => $PORT,
@@ -61,18 +66,19 @@ sub connect
 
 	# message used for request
 	my $msg = "GET /!U=$user&W=$pass|S=QUOTE&C=SUBS&P=$symbols".
-		"&T=$select".
+		"&T=$fields".
 		" HTTP/1.1\n".		# DO NOT FORGET SPACE(' HT...')
 		"Accept-Language: en\n".
 		"Connection: Keep-Alive\n".
-		"User-agent: Streamer Display v1.9.9.3\n".
-		"Accept: text/html, image/gif, image/jpeg, ".
-		"*; q=.2, */*; q=.2\n".
+#		"User-agent: Streamer Display v1.9.9.3\n".
+		"User-agent: $agent\n".
+#		"Accept: text/html, image/gif, image/jpeg, ".
+#		"*; q=.2, */*; q=.2\n".
 		"Host: $SERVER\n\n";
 	# Must have CR('\n') or it wont work.
 	# This is the exact message that was observed while "sniffing"
 	#  the packets of the Streamer when it was initiating a connection.
-	#  This should be left un-changed so that the servers providing data
+	#  This can be left un-changed so that the servers providing data
 	#  have no way of differentiating this from the Streamer application 
 	#  provided by Datek.
 	#  This message is current as of Tue May 22 21:23:59 PDT 2001
@@ -96,8 +102,8 @@ sub connect
 	return $sock;
 }
 # The main things that are needed to connect are the "user", "pass", 
-#  "symbols" and "select".  The "symbols" can be from 1 to 23 symbols in all
-#  uppercase joined by '+'.  The "select" can be any number from 0 to 21
+#  "symbols" and "fields".  The "symbols" can be from 1 to 23 symbols in all
+#  uppercase joined by '+'.  The "fields" can be any number from 0 to 21
 #  in ascending sequence joined by '+'.
 
 #
@@ -253,7 +259,7 @@ sub filter
 				$sym{isld_vol} = $v;
 				$i += 4;
 			} else {
-				print STDERR "select id of '$id' ".
+				print STDERR "fields id of '$id' ".
 					"is not available, aborting\n";
 				return undef;
 			}
@@ -285,8 +291,7 @@ sub filter
 sub receive
 {
 	my ($self) = @_;
-	my $sub = $self->{'sub'};
-	my $filter = $self->{filter};
+	my $sub = $self->{sub_recv};
 	my $timeout = $self->{timeout} || $TIMEOUT;
 
 	while(1) {
@@ -300,7 +305,7 @@ sub receive
 			next;
 		}
 
-		my $sel = IO::Select->new();
+		my $sel = IO::Select->new;
 		$sel->add($sock);
 
 		# recieve data forever
@@ -360,12 +365,9 @@ sub receive
 				# abort if error, otherwise pass data to sub
 				last if ($err);
 
-				# determine whether to "filter" or not
-				if (defined $filter and $filter == -1) {
-					$sub->($buf);
-				} else {
-					my %data = filter($buf);
-					$sub->(%data);
+				{# filter data and send to sub
+				my %data = filter($buf);
+				$sub->(%data);
 				}
 			} elsif ($status == $HEARTBEAT) {
 				my $time = localtime(time);

@@ -6,17 +6,17 @@ use lib '../lib';
 # This is the example in the SYNOPSIS of the Finance::Streamer documentation.
 #
 
-use Finance::Streamer;
+use Finance::Streamer 1.05;
 
 my $user = 'USER1234';
 my $pass = 'SF983JFDLKJSDFJL8342398KLSJF8329483LF';
 my $symbols = 'JDSU+QCOM+AMAT+IBM';
-my $select = '0+1+2+3+4+8+9+21';
+my $fields = '0+1+2+3+4+8+9+21';
 
 my $streamer = Finance::Streamer->new( user => $user,
 					pass => $pass,
 					symbols => $symbols,
-					'select' => $select,
+					fields => $fields,
 					);
 
 my $sub = sub
@@ -32,6 +32,6 @@ my $sub = sub
 	}
 };
 
-$streamer->{'sub'} = $sub;
+$streamer->{sub_recv} = $sub;
 
 $streamer->receive;
