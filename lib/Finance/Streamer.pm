@@ -76,7 +76,7 @@ use warnings;
 
 use Carp;
 
-our $VERSION = 1.08;
+our $VERSION = 1.09;
 
 use IO::Socket::INET;
 use IO::Select;
@@ -566,6 +566,14 @@ sub receive
 				while(1) {
 					my $len = length($buf);
 					my $j = $len - 2;
+					unless ($j >= 0) {
+						$err = 1;
+						my $time = localtime(time);
+						print STDERR "$time: ".
+							"receive(), ".
+							"data recieved too short\n";
+						last;
+					}
 					my $ter = unpack("x$j n", $buf);
 					last if ($ter == 65290);
 
