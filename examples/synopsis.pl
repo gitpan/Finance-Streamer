@@ -6,7 +6,7 @@ use lib '../lib';
 # This is the example in the SYNOPSIS of the Finance::Streamer documentation.
 #
 
-use Finance::Streamer 1.05;
+use Finance::Streamer 1.06;
 
 my $user = 'USER1234';
 my $pass = 'SF983JFDLKJSDFJL8342398KLSJF8329483LF';

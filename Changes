@@ -1,8 +1,22 @@
 Revision history for Perl extension Finance::Streamer.
 
+1.07 Wed Jan  2 16:38:23 PST 2002
+
+	- Clean up of code and documentation.
+
+1.06 Wed May 23 23:23:17 PDT 2001
+
+	- added receive_all() subroutine that passes all the latest
+	  data instead of just the new data
+
+	- a subroutine to execute when a heartbeat occurs can now be specified
+
+	- changed name of subroutine filter() to Parser(), to make its
+	  purpose clearer
+
 1.05 Wed May 23 04:33:41 PDT 2001
 
-	- bug fixes and ideas thanks to Steve Haehnichen
+	- bug fixes and ideas thanks to Steve Haehnichen <steve@trix.com>
 
 		- Changed user agent id default to an id specific to this 
 		  library instead of an id of the Streamer applet.
@@ -20,7 +34,7 @@ Revision history for Perl extension Finance::Streamer.
 
 1.04 Tue May 22 21:06:24 PDT 2001
 
-	- bug fixes thanks to Steve Haehnichen
+	- bug fixes thanks to Steve Haehnichen <steve@trix.com>
 
 		- doc error for select 20 should have been 21.
 		
@@ -40,9 +54,8 @@ Revision history for Perl extension Finance::Streamer.
 	- changed names of select values
 	  last00s -> last_size
 
-	- Added a link to the Data::Dumper module
-	  in the documentation.  The module is very
-	  helpful for visualizing the data returned
+	- Added a link to the Data::Dumper module in the documentation.  
+	  The module is very helpful for visualizing the data returned
 	  by the "filter" subroutine.
 
 1.01  Sat Apr  7 02:20:13 2001

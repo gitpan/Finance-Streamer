@@ -3,6 +3,5 @@ MANIFEST
 Makefile.PL
 README
 lib/Finance/Streamer.pm
-lib/Finance/Streamer.pod
 test.pl
 examples/synopsis.pl
