@@ -2,9 +2,6 @@
 # If you don't know what the '{{{' '}}}' are for, they are used
 #  for folds in the vim text editor (:help fold).
 #
-# ~/.vimrc
-# set foldmethod=marker
-#
 
 # {{{ Intro
 
@@ -15,7 +12,7 @@ Finance::Streamer - Interface to Datek Streamer.
 =head1 VERSION
 
 This document refers to version 1.07 of Finance::Streamer,
-released Jan 02, 2002.
+released Tue, 27 Aug 2002.
 
 =head1 SYNOPSIS
 
@@ -48,7 +45,7 @@ released Jan 02, 2002.
  $streamer->{sub_recv} = $sub;
 
  #$streamer->receive;
- $streamer->receive_state;
+ $streamer->receive_all;
 
 =head1 DESCRIPTION
 
@@ -62,7 +59,7 @@ I<Parser>, make the required tasks of connecting to a Streamer server and
 parsing raw quote data into an easier to use format (such as a hash) easy 
 to do.  The third, I<receive>, makes the task of using the data as easy as 
 possible by using the previously mentioned subroutines (connect, receive).
-The fourth, I<receive_state>, is identical to I<receive> but it returns
+The fourth, I<receive_all>, is identical to I<receive> but it returns
 the data state.
 
 If you just want to use the data, focus on the functions 
@@ -79,7 +76,7 @@ use warnings;
 
 use Carp;
 
-our $VERSION = 1.07;
+our $VERSION = 1.08;
 
 use IO::Socket::INET;
 use IO::Select;
@@ -621,9 +618,9 @@ sub receive
 }
 # }}}
 
-# {{{ receive_state
+# {{{ receive_all
 
-=head2 $obj->receive_state;
+=head2 $obj->receive_all;
 
 Identical to the function receive() except that instead of getting just the
 changed values, any values that do not have changed values have their most
@@ -633,7 +630,7 @@ values that are updated returning the current state.
  Example:
  1: bid_size = 200, ask_size = 300
  2: bid_size = 400			# receive()
- 2: bind_size = 400, ask_size = 300	# receive_state()
+ 2: bind_size = 400, ask_size = 300	# receive_all()
 
 =cut
 
@@ -798,10 +795,10 @@ each symbol.
 
 =head1 PREREQUISITES
 
- Module			Version
- ------			-------
- IO::Socket::INET	1.25
- IO::Select		1.14
+ Module             Version
+ ------             -------
+ IO::Socket::INET   1.25
+ IO::Select         1.14
 
 =head1 AUTHOR
 
@@ -814,3 +811,5 @@ This module is free software.  It may be used, redistributed
 and/or modified under the same terms as Perl itself.
 
 =cut
+
+# vi:foldmethod=marker

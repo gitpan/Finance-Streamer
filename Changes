@@ -1,5 +1,12 @@
 Revision history for Perl extension Finance::Streamer.
 
+1.08  Tue, 27 Aug 2002 11:56:57 -0700
+
+ * Fix of documentation errors: forgot to rename
+  'receive_state' to 'receive_all' in some places.
+
+   Thanks to Doug Stave <doug@peopleplace.com> for finding this problem.
+
 1.07 Wed Jan  2 16:38:23 PST 2002
 
 	- Clean up of code and documentation.
