@@ -1,9 +1,12 @@
 NAME
-    Finance::Streamer - interface to Datek Streamer
+    Finance::Streamer - Interface to Datek Streamer.
 
 DESCRIPTION
     This library provides an interface that can be used to access data
     provided by the Datek Streamer data feed.
+
+    It works with the new Streamer (version 3) as opposed to the older
+    (version 2).
 
 INSTALLATION
     The library can be manually copied to the appropriate directory or the

@@ -1,8 +1,12 @@
 Revision history for Perl extension Finance::Streamer.
 
-1.01  Sat Apr  7 02:20:13 2001
+1.03  Tue May 22 01:37:07 PDT 2001
 
-	- original version
+	- I added timouts for all recv() subroutines in receive().
+	  This was required to stop the situation of waiting forever
+	  for data to arrive.
+
+	- Overall cleanup of code and documentation.
 
 1.02  Mon Apr  9 05:17:40 PDT 2001
 
@@ -13,3 +17,7 @@ Revision history for Perl extension Finance::Streamer.
 	  in the documentation.  The module is very
 	  helpful for visualizing the data returned
 	  by the "filter" subroutine.
+
+1.01  Sat Apr  7 02:20:13 2001
+
+	- original version

@@ -4,5 +4,6 @@ use ExtUtils::MakeMaker;
 WriteMakefile(
     'NAME'		=> 'Finance::Streamer',
     'VERSION_FROM'	=> 'lib/Finance/Streamer.pm',
-    'PREREQ_PM'		=> { IO::Socket::INET => 1.25 },
+    'PREREQ_PM'		=> { IO::Socket::INET 	=> 1.25,
+    			     IO::Select 	=> 1.14},
 );

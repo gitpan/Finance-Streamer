@@ -4,9 +4,10 @@ require 5.005_62;
 use strict;
 use warnings;
 
-our $VERSION = '1.02';
+our $VERSION = '1.03';
 
 use IO::Socket::INET 1.25;
+use IO::Select 1.14;
 
 # status codes
 my $QUOTE_RECV = 83;
@@ -23,13 +24,14 @@ my $RECV_MAX = 3000;
 my $MAX_SYM_LEN = 5;
 
 # defaul timeout in seconds of socket
-my $DFLT_TIMEOUT = 120;	
+# Used for connect(), recv().
+my $TIMEOUT = 60;	
 
 sub new
 {
 	my ($pkg, %arg) = @_;
 
-	bless { %arg 
+	bless { %arg
 		}, $pkg;
 }
 # The "new" sub's main purpose is to store the varibles that will be needed by
@@ -47,7 +49,7 @@ sub connect
 	my ($user, $pass) = ($self->{user}, $self->{pass});
 	my $symbols = $self->{symbols};
 	my $select = $self->{'select'};
-	my $timeout = $self->{timeout} || $DFLT_TIMEOUT;
+	my $timeout = $self->{timeout} || $TIMEOUT;
 
 	my $sock = IO::Socket::INET->new(PeerAddr => $SERVER,
 					 PeerPort => $PORT,
@@ -55,7 +57,8 @@ sub connect
 					 Timeout  => $timeout,
 					 );
 	unless($sock) {
-		print STDERR "socket creation failed: $!\n";
+		my $time = localtime(time);
+		print STDERR "$time: connect(), socket creation failed: $!\n";
 		return undef;
 	}
 
@@ -78,7 +81,8 @@ sub connect
 	#  This message is current as of Sun Apr  8 00:54:10 PDT 2001.
 
 	unless ($sock->send($msg, 0)) {
-		print STDERR "initial send() failed: $!\n";
+		my $time = localtime(time);
+		print STDERR "$time: connect(), initial send() failed: $!\n";
 		return undef;
 	}
 
@@ -86,7 +90,8 @@ sub connect
 	my $buf;
 	$sock->recv($buf, 512);
 	unless ($buf) {
-		print STDERR "initial recv() failed: $!\n";
+		my $time = localtime(time);
+		print STDERR "$time: connect(), initial recv() failed: $!\n";
 		return undef;
 	}
 	}
@@ -122,7 +127,8 @@ sub filter
 		# check to make sure enough room is left
 		my $p = $i + $size;
 		if ($p > $tot_bytes) {
-			print STDERR "There should be more data, ".
+			print STDERR "filter(), ".
+				"There should be more data, ".
 				"quote buffer is corrupt\n".
 				"\tamount needed: $p\n".
 				"\tamount left: $tot_bytes\n".
@@ -132,7 +138,8 @@ sub filter
 
 		my $one = unpack("x$i n", $raw_data);
 		if ($one != 1) {
-			print STDERR "This value should alway equal 1, ".
+			print STDERR "filter(), ".
+				"This value should alway equal 1, ".
 				"but the actual value is '$one'.".
 				"The quote buffer may be corrupt, ".
 				"but I am continuing anyway\n";
@@ -148,7 +155,8 @@ sub filter
 		$i += $sym_len;	# symbol characters
 
 		if ($sym_len > $MAX_SYM_LEN) {
-			print STDERR "symbol length of '$sym_len' ".
+			print STDERR "filter(), ".
+				"symbol length of '$sym_len' ".
 				"is to big, aborting quote processing\n";
 			return undef;
 		}
@@ -261,13 +269,13 @@ sub filter
 			}
 		}
 		if ($i != $p) {
-			print STDERR "parity check wrong: $i != $p\n";
+			print STDERR "filter(), parity check wrong: $i != $p\n";
 			return undef;
 		}
 
 		my $term = unpack("x$i n", $raw_data);
 		if ($term != 65290) {
-			print STDERR "terminator wrong: $term\n";
+			print STDERR "filter(), terminator wrong: $term\n";
 			return undef;
 		}
 		$i += 2;	# terminator
@@ -276,7 +284,8 @@ sub filter
 	}
 
 	if ($i != $tot_bytes) {
-		print STDERR "quote proccessing error: $i != $tot_bytes\n";
+		print STDERR "filter(), ".
+			"quote proccessing error: $i != $tot_bytes\n";
 		return undef;
 	}
 
@@ -288,26 +297,41 @@ sub receive
 	my ($self) = @_;
 	my $sub = $self->{'sub'};
 	my $filter = $self->{filter};
+	my $timeout = $self->{timeout} || $TIMEOUT;
 
 	while(1) {
 		my $sock = $self->connect;
-		unless ($sock) {
-			print STDERR "connect() failed: $!\n";
+		if ($sock) {
+			my $time = localtime(time);
+			print STDERR "$time: receive(), connect() OK\n";
+		} else {
+			my $time = localtime(time);
+			print STDERR "$time: receive(), connect() failed: $!\n";
 			next;
 		}
+
+		my $sel = IO::Select->new();
+		$sel->add($sock);
 
 		# recieve data forever
 		while(1) {
 			my $buf;
 
-			$sock->recv($buf, $RECV_MAX);
+			if ($sel->can_read($timeout)) {
+				$sock->recv($buf, $RECV_MAX);
+			} else {
+				my $time = localtime(time);
+				print STDERR "$time: receive(), timeout #1\n";
+				last;
+			}
+
 			unless ($buf) {
-				print STDERR "recv() 1 failure, reconnecting\n";
+				my $time = localtime(time);
+				print STDERR "$time: receive(), err #1\n";
 				last;
 			}
 
 			my $status = unpack("C", $buf);
-
 			if ($status == $QUOTE_RECV) {
 				my $err;
 
@@ -319,10 +343,24 @@ sub receive
 					last if ($ter == 65290);
 
 					my $t_buf;
-					$sock->recv($t_buf, $RECV_MAX);
+
+					if ($sel->can_read($timeout)) {
+						$sock->recv($t_buf, $RECV_MAX);
+					} else {
+						$err = 1;
+						my $time = localtime(time);
+						print STDERR "$time: ".
+							"receive(), ".
+							"timeout #2\n";
+						last;
+					}
+
 					unless ($t_buf) {
 						$err = 1;
-						print STDERR "recv() err: $!\n";
+						my $time = localtime(time);
+						print STDERR "$time: ".
+							"receive(), ".
+							"err #2\n";
 						last;
 					}
 
@@ -339,22 +377,23 @@ sub receive
 					my %data = filter($buf);
 					$sub->(%data);
 				}
-				# The choice to "filter" as opposed to not
-				#  is most likely going to "filter", so that
-				#  is why it is the default (else).
-				
 			} elsif ($status == $HEARTBEAT) {
 				my $time = localtime(time);
-				print STDERR "$time: heartbeat\n";
+				print STDERR "$time: receive(), heartbeat\n";
 				next;
 			} else {
-				print STDERR "unknown status\n";
+				my $time = localtime(time);
+				print STDERR "$time: receive(), ".
+					"unknown status\n";
 				# This is a common occurance
 			}
 		}
 		close($sock);
 	}
 }
+
+
+#***> local subroutines - do no use ouside this module! <***********************
 
 sub bin2float
 {

@@ -1,11 +1,11 @@
 =head1 NAME
 
-Finance::Streamer - interface to Datek Streamer
+Finance::Streamer - Interface to Datek Streamer
 
 =head1 VERSION
 
-This document refers to version 1.02 of Finance::Streamer,
-released April 7, 2001.
+This document refers to version 1.03 of Finance::Streamer,
+released May 22, 2001.
 
 =head1 SYNOPSIS
 
@@ -14,7 +14,7 @@ released April 7, 2001.
  my $user = 'USER1234';
  my $pass = 'SF983JFDLKJSDFJL8342398KLSJF8329483LF';
  my $symbols = 'JDSU+QCOM+AMAT+IBM';
- my $select = '0+1+2+3+4+8+9+21'
+ my $select = '0+1+2+3+4+8+9+21';
 
  my $streamer = Finance::Streamer->new( user => $user,
 					pass => $pass,
@@ -24,14 +24,13 @@ released April 7, 2001.
 
  my $sub = sub
  {
-	my (%data) = @_;
+	my (%all_data) = @_;
 
-	foreach my $sym (keys %data) {
-		print "$sym\n";
-		my $h_ref = $data{$sym};
-		my %data = %$h_ref;
-		foreach my $key (keys %data) {
-			print "\t$key" . "=" . $data{$key} . "\n";
+	foreach my $symbol (keys %all_data) {
+		print "$symbol\n";
+		my %data = %{$all_data{$symbol}};
+		foreach my $data_part (keys %data) {
+			print "$data_part", "=", $data{$data_part}, "\n";
 		}
 	}
  };
@@ -45,13 +44,23 @@ released April 7, 2001.
 This library provides an interface that can be used to access data provided
 by the Datek Streamer data feed.
 
+It works with the new Streamer (version 3) as opposed to the older (version 2).
+
+There are three subroutines available to use.  The first two, I<connect> and 
+I<filter>, make the required tasks of connecting to a Streamer server and
+filtering raw quote data into an easier to use format (such as a hash) easy 
+to do.  The third, I<receive>, makes the task of using the data as easy as 
+possible by using the previously mentioned subroutines (connect, receive).
+
 =head1 SUBROUTINES
 
 =over 4
 
 =item $streamer = Finance::Streamer->new;
 
-	Returns streamer object on success, undef otherwise
+ Arguments depend on requirements of other subroutines.
+
+	Returns streamer object on success, undef otherwise.
 
 The I<new> sub stores the values passed to it for use by other
 subroutines later.  For example, if you wanted to use a
@@ -60,47 +69,57 @@ you could do it like so.
 
  $streamer = Finance::Streamer->new(symbols => $your_symbols);
 
- # then use the sub
+ # then use the sub that requires "symbols"
 
 =item $sock = $streamer->connect;
 
  user pass symbols select [timeout]
 
-	Returns socket object on success, undef otherwise
+	Returns socket object on success, undef otherwise.
 
-The I<connect> sub is used to initiate a connection with the data
-server.  This sub requires certain values to be defined in the I<streamer>
-object.
+The I<connect> sub is used to initiate a connection with the data server.
 
-The I<user> value is the user name of the account.  See the section
-"How to obtain user name and password" for more info.
+The values I<user>, I<pass>, I<symbols>, I<select> and an optional I<timeout>,
+must be defined in the I<streamer> object.
 
-The I<pass> value is the password for the account.  See the section
-"How to obtain user name and password" for more info.
+The I<user> and I<pass> value is the user name and password of the account
+to be used for receiving data.  See the section 
+"How to obtain user name and password" below, for more info.  
+
+B<IMPORTANT> - If the I<user> or I<pass> is wrong, there is no 
+indication other than no data arriving after connection.
 
 The I<symbols> value can contain up to 23 symbols in all uppercase joined by
 a '+' character.
 
  $symbols = "JDSU+QCOM+AMAT+IBM";
 
-The I<select> value can be any combination of the values 0 to 21 in
+The I<select> value can be any combination of the integers 0 to 21 in
 sequential order joined by the '+' character.  See the section 
-"select numbers" for more info.
+"select numbers" below, for more info.
 
  $select = "0+1+2+3+21";
 
+The I<timeout> specifies the maximum number of seconds to wait for the
+connection to succeed.  The default value of B<60 seconds> is used
+if no value is specified.
+
+
 =item %data = Finance::Streamer::filter($raw_data);
 
-	Returns data upon success, undef otherwise
+ raw_data
 
-The I<filter> subroutine changes raw quote data into an object so that
-the data can used easily.
+	Returns data upon success, undef otherwise.
+
+The I<filter> subroutine changes raw quote data into an object 
+(such as a hash) so that the data is easier to use.
 
 B<IMPORTANT> - The raw quote data must have been received using 
 the I<select> value 0 or this subroutine wont work.
 
-The only argument that is required is a variable containing the raw data
-for a quote.
+This subroutine does not use the I<streamer> object, so the name must
+be fully specified.  The only argument that is required is a variable 
+containing the raw data for a quote.
 
 If the filter is successful a hash containing the data will be returned.  
 The hash will contain a key for each symbol that data was received for.  
@@ -109,53 +128,59 @@ each value that data is available for.  A helpful tool for visualizing this
 is the I<Data::Dumper> module.
 
 Many checks/tests are made while the data is being filtered.  If something 
-goes wrong, an error message will be printed to STDERR and I<undef> will 
-be returned if the error was fatal.
+is wrong with the data, an error message will be printed to STDERR 
+and I<undef> will be returned if the error was fatal.
 
 =item $streamer->receive;
 
  sub user pass symbols select [timeout] [filter]
 
-	Returns socket object on success, undef otherwise
+	Returns socket object on success, undef otherwise.
 
-The I<recieve> subroutine deals with all the issues of connecting to the
+The I<receive> subroutine deals with all the issues of connecting to the
 server, receiving data, etc, and executes the subroutine specified by I<sub>, 
 passing a single argument which contains the quote data every time a 
 quote is received.
 
 The single argument that is passed to B<sub> is determined by
-the value of I<filter> stored in the streamer object.  If I<filter> is defined
-and has a value of -1 raw quote data is passed to the sub, otherwise filtered
-quote data is passed to the sub.
+the value of I<filter> stored in the I<streamer> object.  
+If I<filter> is defined and has a value of -1 raw quote data is passed 
+to the sub, otherwise filtered quote data is passed to the sub.
 
-The values user, pass, symbols, select and timeout are used for the I<connect>
-subroutine.  See the section on "connect" for more information.
+The values I<user>, I<pass>, I<symbols>, and I<select> are used only for the 
+I<connect> subroutine.  See the section on "connect" for more information.
+
+The I<timeout> specifies the maximum number of seconds to wait for
+new data to be received.  The default value of B<60 seconds> is used
+if no value is specified.
 
 Error messages may be displayed.  Messages about errors receiving data 
-will indicate why and often result in a reconnection.  Messages about
+will indicate why and may result in a reconnection.  Messages about
 the status indicated in the received data are for information purposes 
 and do not usually result in a reconnect.  All messages are displayed
 to STDERR.
 
+=back
+
 =head1 NEED TO KNOW
 
-This section information that needs to be known in order to use this
+This section contains information that must be understood in order to use this
 library.
 
 =head2 How to obtain user name and password
 
 When you first start the Streamer application provided by Datek a window
 will pop up giving you a choice of what you want to launch 
-(Streamer, Portfolio, Last Sale, Index).  If you look at the source of
+(Streamer, Portfolio, Last Sale, Index).  If you look at the html source of
 that window you will find near the top a place where your user name
 is displayed in all capitals (e.g. "USER12345") and below it is
-a string of upper case letters and numbers.  The long string is your
+a long string of upper case letters and numbers.  The long string is your
 password.
 
 =head2 select numbers
 
 The I<select numbers> are used to choose what data you want to receive for
-each symbol.  If you wanted to receive the 
+each symbol.
 
  number		name		description
  ------		----		-----------
@@ -176,8 +201,8 @@ each symbol.  If you wanted to receive the
  14		BT		tick, up(U) or down(D)
  15		prev_close	previous close
  16		exch		exchange(q=Nasdaq)
- 17		?		do not use
- 18		?		do not use
+ 17		?		do not use, unknown
+ 18		?		do not use, unknown
  19		isld_bid	Island bid
  20		isld_ask	Island ask
  20		isld_vol	Island volume
@@ -188,6 +213,7 @@ each symbol.  If you wanted to receive the
  Module			Version
  ------			-------
  IO::Socket::INET	1.25
+ IO::Select		1.14
 
 =head1 AUTHOR
 
@@ -195,6 +221,6 @@ Jeremiah Mahler E<lt>jmahler@pacbell.netE<gt>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2001(s), Jeremiah Mahler. All Rights Reserved.
+Copyright (c) 2001, Jeremiah Mahler. All Rights Reserved.
 This module is free software.  It may be used, redistributed
 and/or modified under the same terms as Perl itself.
