@@ -1,0 +1,200 @@
+=head1 NAME
+
+Finance::Streamer - interface to Datek Streamer
+
+=head1 VERSION
+
+This document refers to version 1.02 of Finance::Streamer,
+released April 7, 2001.
+
+=head1 SYNOPSIS
+
+ use Finance::Streamer;
+
+ my $user = 'USER1234';
+ my $pass = 'SF983JFDLKJSDFJL8342398KLSJF8329483LF';
+ my $symbols = 'JDSU+QCOM+AMAT+IBM';
+ my $select = '0+1+2+3+4+8+9+21'
+
+ my $streamer = Finance::Streamer->new( user => $user,
+					pass => $pass,
+					symbols => $symbols,
+					'select' => $select,
+					);
+
+ my $sub = sub
+ {
+	my (%data) = @_;
+
+	foreach my $sym (keys %data) {
+		print "$sym\n";
+		my $h_ref = $data{$sym};
+		my %data = %$h_ref;
+		foreach my $key (keys %data) {
+			print "\t$key" . "=" . $data{$key} . "\n";
+		}
+	}
+ };
+
+ $streamer->{'sub'} = $sub;
+
+ $streamer->receive;
+
+=head1 DESCRIPTION
+
+This library provides an interface that can be used to access data provided
+by the Datek Streamer data feed.
+
+=head1 SUBROUTINES
+
+=over 4
+
+=item $streamer = Finance::Streamer->new;
+
+	Returns streamer object on success, undef otherwise
+
+The I<new> sub stores the values passed to it for use by other
+subroutines later.  For example, if you wanted to use a
+subroutine that required a value for I<symbols> to be defined,
+you could do it like so.
+
+ $streamer = Finance::Streamer->new(symbols => $your_symbols);
+
+ # then use the sub
+
+=item $sock = $streamer->connect;
+
+ user pass symbols select [timeout]
+
+	Returns socket object on success, undef otherwise
+
+The I<connect> sub is used to initiate a connection with the data
+server.  This sub requires certain values to be defined in the I<streamer>
+object.
+
+The I<user> value is the user name of the account.  See the section
+"How to obtain user name and password" for more info.
+
+The I<pass> value is the password for the account.  See the section
+"How to obtain user name and password" for more info.
+
+The I<symbols> value can contain up to 23 symbols in all uppercase joined by
+a '+' character.
+
+ $symbols = "JDSU+QCOM+AMAT+IBM";
+
+The I<select> value can be any combination of the values 0 to 21 in
+sequential order joined by the '+' character.  See the section 
+"select numbers" for more info.
+
+ $select = "0+1+2+3+21";
+
+=item %data = Finance::Streamer::filter($raw_data);
+
+	Returns data upon success, undef otherwise
+
+The I<filter> subroutine changes raw quote data into an object so that
+the data can used easily.
+
+B<IMPORTANT> - The raw quote data must have been received using 
+the I<select> value 0 or this subroutine wont work.
+
+The only argument that is required is a variable containing the raw data
+for a quote.
+
+If the filter is successful a hash containing the data will be returned.  
+The hash will contain a key for each symbol that data was received for.  
+Each symbol entry is a reference to another hash that has a key for 
+each value that data is available for.  A helpful tool for visualizing this
+is the I<Data::Dumper> module.
+
+Many checks/tests are made while the data is being filtered.  If something 
+goes wrong, an error message will be printed to STDERR and I<undef> will 
+be returned if the error was fatal.
+
+=item $streamer->receive;
+
+ sub user pass symbols select [timeout] [filter]
+
+	Returns socket object on success, undef otherwise
+
+The I<recieve> subroutine deals with all the issues of connecting to the
+server, receiving data, etc, and executes the subroutine specified by I<sub>, 
+passing a single argument which contains the quote data every time a 
+quote is received.
+
+The single argument that is passed to B<sub> is determined by
+the value of I<filter> stored in the streamer object.  If I<filter> is defined
+and has a value of -1 raw quote data is passed to the sub, otherwise filtered
+quote data is passed to the sub.
+
+The values user, pass, symbols, select and timeout are used for the I<connect>
+subroutine.  See the section on "connect" for more information.
+
+Error messages may be displayed.  Messages about errors receiving data 
+will indicate why and often result in a reconnection.  Messages about
+the status indicated in the received data are for information purposes 
+and do not usually result in a reconnect.  All messages are displayed
+to STDERR.
+
+=head1 NEED TO KNOW
+
+This section information that needs to be known in order to use this
+library.
+
+=head2 How to obtain user name and password
+
+When you first start the Streamer application provided by Datek a window
+will pop up giving you a choice of what you want to launch 
+(Streamer, Portfolio, Last Sale, Index).  If you look at the source of
+that window you will find near the top a place where your user name
+is displayed in all capitals (e.g. "USER12345") and below it is
+a string of upper case letters and numbers.  The long string is your
+password.
+
+=head2 select numbers
+
+The I<select numbers> are used to choose what data you want to receive for
+each symbol.  If you wanted to receive the 
+
+ number		name		description
+ ------		----		-----------
+ 0		symbol
+ 1		bid
+ 2		ask
+ 3		last
+ 4		bid_size	size of bid in 100's
+ 5		ask_size	size of ask in 100's
+ 6		bidID		(Q=Nasdaq)
+ 7		askID
+ 8		volume		total volume
+ 9		last_size	size of last trade
+ 10		trade_time	time of last trade (HH:MM:SS)
+ 11		quote_time	time of last quote (HH:MM:SS)
+ 12		high		high of day
+ 13		low		low of day
+ 14		BT		tick, up(U) or down(D)
+ 15		prev_close	previous close
+ 16		exch		exchange(q=Nasdaq)
+ 17		?		do not use
+ 18		?		do not use
+ 19		isld_bid	Island bid
+ 20		isld_ask	Island ask
+ 20		isld_vol	Island volume
+
+
+=head1 PREREQUISITES
+
+ Module			Version
+ ------			-------
+ IO::Socket::INET	1.25
+
+=head1 AUTHOR
+
+Jeremiah Mahler E<lt>jmahler@pacbell.netE<gt>
+
+=head1 COPYRIGHT
+
+Copyright (c) 2001(s), Jeremiah Mahler. All Rights Reserved.
+This module is free software.  It may be used, redistributed
+and/or modified under the same terms as Perl itself.

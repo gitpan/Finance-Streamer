@@ -1,0 +1,15 @@
+Revision history for Perl extension Finance::Streamer.
+
+1.01  Sat Apr  7 02:20:13 2001
+
+	- original version
+
+1.02  Mon Apr  9 05:17:40 PDT 2001
+
+	- changed names of select values
+	  last00s -> last_size
+
+	- Added a link to the Data::Dumper module
+	  in the documentation.  The module is very
+	  helpful for visualizing the data returned
+	  by the "filter" subroutine.

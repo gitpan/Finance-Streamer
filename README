@@ -1,0 +1,24 @@
+NAME
+    Finance::Streamer - interface to Datek Streamer
+
+DESCRIPTION
+    This library provides an interface that can be used to access data
+    provided by the Datek Streamer data feed.
+
+INSTALLATION
+    The library can be manually copied to the appropriate directory or the
+    typical process may be followed below.
+
+     perl Makefile.PL
+     make
+     make test
+     make install
+
+AUTHOR
+    Jeremiah Mahler <jmahler@pacbell.net>
+
+COPYRIGHT
+    Copyright (c) 2001, Jeremiah Mahler. All Rights Reserved. This module is
+    free software. It may be used, redistributed and/or modified under the
+    same terms as Perl itself.
+
