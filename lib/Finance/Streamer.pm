@@ -4,7 +4,7 @@ require 5.005_62;
 use strict;
 use warnings;
 
-our $VERSION = '1.03';
+our $VERSION = '1.04';
 
 use IO::Socket::INET 1.25;
 use IO::Select 1.14;
@@ -19,9 +19,6 @@ my $PORT = 80;
 
 # max size of buffer used for recv()
 my $RECV_MAX = 3000;
-
-# max length of a symbol in chars/bytes
-my $MAX_SYM_LEN = 5;
 
 # defaul timeout in seconds of socket
 # Used for connect(), recv().
@@ -78,7 +75,7 @@ sub connect
 	#  This should be left un-changed so that the servers providing data
 	#  have no way of differentiating this from the Streamer application 
 	#  provided by Datek.
-	#  This message is current as of Sun Apr  8 00:54:10 PDT 2001.
+	#  This message is current as of Tue May 22 21:23:59 PDT 2001
 
 	unless ($sock->send($msg, 0)) {
 		my $time = localtime(time);
@@ -153,13 +150,6 @@ sub filter
 
 		$sym{symbol} = unpack("x$i a$sym_len", $raw_data);
 		$i += $sym_len;	# symbol characters
-
-		if ($sym_len > $MAX_SYM_LEN) {
-			print STDERR "filter(), ".
-				"symbol length of '$sym_len' ".
-				"is to big, aborting quote processing\n";
-			return undef;
-		}
 
 		# for every piece of data for 1 symbol
 		for (;$i < $p;) {

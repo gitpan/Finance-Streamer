@@ -4,7 +4,7 @@ Finance::Streamer - Interface to Datek Streamer
 
 =head1 VERSION
 
-This document refers to version 1.03 of Finance::Streamer,
+This document refers to version 1.04 of Finance::Streamer,
 released May 22, 2001.
 
 =head1 SYNOPSIS
@@ -205,7 +205,7 @@ each symbol.
  18		?		do not use, unknown
  19		isld_bid	Island bid
  20		isld_ask	Island ask
- 20		isld_vol	Island volume
+ 21		isld_vol	Island volume
 
 
 =head1 PREREQUISITES

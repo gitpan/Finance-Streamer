@@ -1,5 +1,14 @@
 Revision history for Perl extension Finance::Streamer.
 
+1.04 Tue May 22 21:06:24 PDT 2001
+
+	- bug fixes thanks to Steve Haehnichen
+
+		- doc error for select 20 should have been 21.
+		
+		- Symbol length error for '^COMPX'.
+
+
 1.03  Tue May 22 01:37:07 PDT 2001
 
 	- I added timouts for all recv() subroutines in receive().
