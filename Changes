@@ -1,5 +1,9 @@
 Revision history for Perl extension Finance::Streamer.
 
+1.10 Tue, 23 Sep 2003 19:53:42 -0700 
+
+ * Added FAQ.
+
 1.09 Mon, 03 Feb 2003 14:29:16 -0800
 
  * Invalid type in unpack BUG fixed: thanks to "Mudit Wahal" <mwahal@yahoo.com>

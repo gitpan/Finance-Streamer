@@ -1,0 +1,41 @@
+----------------------------------------------------------------------------
+Q: What about feature X?
+
+A: At this time I am not going to implement any further features
+because I am not using Finance::Streamer for my own applications.
+If anyone implements new features I welcome their inclusion
+into Finance::Streamer and I will give credit where credit is due.
+
+----------------------------------------------------------------------------
+Q: What data provider do you recommend.
+
+A: I recommend using MyTrack [http://www.mytrack.com] for
+financial data because they provide an interface and documentation
+for using their data. Their interface has more features
+than most in that broker operations (buy, sell, etc) are also
+part of the interface. It is also very cost effective starting
+at just $25 per/month for delayed data.
+
+Note, they do not provided a Perl interface.
+A Perl interface to their C interface is possible but I found
+it very difficult to do using either Swig or Inline Perl.
+But if you need an interface for C/C++ or Java, MyTrack
+may suit your needs better than Finance::Streamer could.
+
+----------------------------------------------------------------------------
+Q: What tools did you use to reverse engineer the protocol?
+
+A: It has been a long time since I did this sort of work so there
+may be better tools available but the main things I used are the following:
+ * tcpdump [http://www.tcpdump.org]
+ * Richard Stevens.  UNIX Network Programming
+ * Richard Stevens.  TCP/IP Illustrated
+Then it is just a matter of "sniffing" the packets and trying to decipher
+what is going on. My setup was a Linux machine connected to the Internet
+and acting as a router to a Windows machine on the internal network.
+Then I would start the sniffer (tcpdump), and then start the official
+streamer program on the Windows machine. Then I would try to figure out
+what is going on and then write code that does exactly what the official
+streamer application does.
+
+----------------------------------------------------------------------------
